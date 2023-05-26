@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 
-from .serializers import UserSerializer,UserProfileSerializer,  UserIdUsernameSerializer
+from .serializers import UserSerializer,UserProfileSerializer, UserIdUsernameSerializer
 from .models import UserProfile
 
 def set_token_on_response_cookie(user:User) -> Response:
