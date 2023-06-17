@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 
-from .serializers import UserSerializer,UserProfileSerializer, UserIdUsernameSerializer
+from .serializers import UserSerializer, UserInfoSerializer, UserProfileSerializer, UserIdUsernameSerializer
 from .models import UserProfile
 
 def set_token_on_response_cookie(user:User) -> Response:
@@ -83,5 +83,63 @@ class UserInfoView(APIView):
         if not request.user.is_authenticated:
             return Response({"detail": "로그인 후 다시 시도해주세요."}, status=status.HTTP_401_UNAUTHORIZED)
         user = request.user
-        serializer = UserIdUsernameSerializer(user)
+
+        serializer = UserProfileSerializer(user)
+        print(serializer.data)
+    
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class MyPageView(APIView):
+    def get(self, request):
+        if not request.user.is_authenticated:
+            return Response({"detail": "로그인 후 다시 시도해주세요."}, status=status.HTTP_401_UNAUTHORIZED)
+        user = request.user
+        profile = UserProfile.objects.get(user=user)
+        print(profile, "hi!")
+        if not profile:
+            return Response({"No profl"})
+        serializer = UserProfileSerializer(profile)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+    def patch(self, request):
+
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication credentials not provided"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            user_info = UserProfile.objects.get(user=request.user)
+        except:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        print(request.data)
+        user = User.objects.get(id=request.user.id)
+        serializer_user = UserSerializer(user, data=request.data, partial = True)
+        serializer_profile = UserProfileSerializer(user_info, data=request.data, partial=True)
+        if not serializer_profile.is_valid():
+            return Response({"detail": "data validation error"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not serializer_user.is_valid():
+            return Response({"detail": "data validation error"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer_user.save()
+        serializer_profile.save()
+        return Response(serializer_profile.data, status=status.HTTP_200_OK)
+    
+    
+    
+    # def patch(self, request, user_id):
+        try:
+            user = UserProfile.objects.get(user=user)
+        except:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user != user:
+            return Response({"detail": "Permission denied"}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = PostSerializer(post, data=request.data, partial=True)
+
+
+        if not serializer.is_valid():
+            return Response({"detail": "data validation error"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
